@@ -39,8 +39,8 @@ public class GetController {
         return ResponseEntity.ok(accounts);
     }
 
-    @GetMapping("/customeraccounts")
-    public ResponseEntity<List<AccountDto>> getAllByCustomerNumber(@RequestParam("customerNumber") String customerNumber) {
+    @GetMapping("{customerNumber}/customeraccounts")
+    public ResponseEntity<List<AccountDto>> getAllByCustomerNumber(@PathVariable String customerNumber) {
         List<AccountDto> accounts = accountService.getAllAccountsByCustomerNumber(customerNumber);
         if (accounts.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
