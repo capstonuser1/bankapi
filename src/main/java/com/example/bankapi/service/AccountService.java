@@ -41,6 +41,15 @@ public class AccountService {
     }
 
     @Transactional
+    public List<AccountDto> getAllAccountsByCustomerNumber(String customerNumber) {
+        return accountRepository.getAccounts()
+                .stream()
+                .filter(account -> account.getCustomer().getCustomerNumber().equals(customerNumber))
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Transactional
     @Cacheable(value = "accounts", keyGenerator = "customGenerator")
     //@PreAuthorize("hasRole('account_holder')")
     public List<AccountDto> getAllAccountsBySubject(String subject){
@@ -99,6 +108,7 @@ public class AccountService {
                 account.getOpenedDate()
         );
     }
+
 
 
 }

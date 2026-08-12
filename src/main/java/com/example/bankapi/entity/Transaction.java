@@ -1,6 +1,5 @@
 package com.example.bankapi.entity;
 
-import com.example.bankapi.entity.Account;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -9,15 +8,16 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 
 @Entity
 @Table(name = "TRANSACTIONS")
 public class Transaction {
     @Id
-    @Size(max = 36)
-    @Column(name = "TXN_ID", nullable = false, length = 36)
-    private String txnId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "TXN_ID", nullable = false)
+    private Long txnId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -40,9 +40,9 @@ public class Transaction {
     @Column(name = "STATUS", nullable = false, length = 10)
     private String status;
 
-    @NotNull
+
     @ColumnDefault("SYSTIMESTAMP")
-    @Column(name = "TXN_DATE", nullable = false)
+    @Column(name = "TXN_DATE")
     private Instant txnDate;
 
     @Size(max = 255)
@@ -53,7 +53,7 @@ public class Transaction {
 
     }
 
-    public Transaction(String txnId, Account account, String txnType, BigDecimal amount, String status, Instant txnDate, String description) {
+    public Transaction(Long txnId, Account account, String txnType, BigDecimal amount, String status, Instant txnDate, String description) {
         this.txnId = txnId;
         this.account = account;
         this.txnType = txnType;
@@ -63,11 +63,11 @@ public class Transaction {
         this.description = description;
     }
 
-    public String getTxnId() {
+    public Long getTxnId() {
         return txnId;
     }
 
-    public void setTxnId(String txnId) {
+    public void setTxnId(Long txnId) {
         this.txnId = txnId;
     }
 

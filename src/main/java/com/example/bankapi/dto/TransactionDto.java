@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 public class TransactionDto implements Serializable {
-    private String transactionId;
+    private Long transactionId;
     private String accountNumber;
     private String transactionType;
     private BigDecimal amount;
@@ -13,7 +13,7 @@ public class TransactionDto implements Serializable {
     public TransactionDto() {
     }
 
-    public TransactionDto(String transactionId, String accountNumber, String transactionType, BigDecimal amount, String description) {
+    public TransactionDto(Long transactionId, String accountNumber, String transactionType, BigDecimal amount, String description) {
         this.transactionId = transactionId;
         this.accountNumber = accountNumber;
         this.transactionType = transactionType;
@@ -21,7 +21,7 @@ public class TransactionDto implements Serializable {
         this.description = description;
     }
 
-    public String getTransactionId() {
+    public Long getTransactionId() {
         return transactionId;
     }
 

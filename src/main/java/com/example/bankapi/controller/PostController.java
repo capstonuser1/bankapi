@@ -5,6 +5,7 @@ import com.example.bankapi.model.TransferRequest;
 import com.example.bankapi.model.TransferResponse;
 import com.example.bankapi.service.TransferService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,17 +26,17 @@ public class PostController {
     public ResponseEntity<TransferResponse> transfer(@Valid @RequestBody TransferRequest request) {
         TransferResponse status = transferService.doTransfer(request);
         if(status.status() == TransactionStatus.FAILED){
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(status);
     }
 
     @PostMapping("/dotransaction")
     public ResponseEntity<TransferResponse> doTransaction(@Valid @RequestBody TransferRequest request) {
         TransferResponse response = transferService.doTransaction(request);
         if(response.status() == TransactionStatus.FAILED){
-            return ResponseEntity.status(500).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

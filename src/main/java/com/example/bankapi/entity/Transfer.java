@@ -14,9 +14,9 @@ import java.time.Instant;
 @Table(name = "TRANSFERS")
 public class Transfer {
     @Id
-    @Size(max = 36)
-    @Column(name = "TRANSFER_ID", nullable = false, length = 36)
-    private String transferId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "TRANSFER_ID", nullable = false)
+    private Long transferId;
 
     @NotNull
     @OneToOne(fetch = FetchType.LAZY, optional = false)
@@ -35,11 +35,11 @@ public class Transfer {
     @Column(name = "CREATED_DATE", nullable = false)
     private Instant createdDate;
 
-    public String getTransferId() {
+    public Long getTransferId() {
         return transferId;
     }
 
-    public void setTransferId(String transferId) {
+    public void setTransferId(Long transferId) {
         this.transferId = transferId;
     }
 

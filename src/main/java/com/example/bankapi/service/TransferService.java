@@ -1,6 +1,7 @@
 package com.example.bankapi.service;
 
-import com.example.bankapi.model.Account;
+import com.example.bankapi.entity.Account;
+import com.example.bankapi.entity.Transaction;
 import com.example.bankapi.model.TransactionStatus;
 import com.example.bankapi.model.TransferRequest;
 import com.example.bankapi.model.TransferResponse;
@@ -14,6 +15,8 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,44 +40,58 @@ public class TransferService {
     @Transactional
     public TransferResponse doTransfer(TransferRequest request) {
         try {
-            //Reduce balance in from Account
-            accountRepository.decrementAccountBalance(request.fromAccountId(), request.amount());
+            accountRepository.decrementAccountBalance(request.fromAccountNumber(), request.amount());
+            accountRepository.incrementAccountBalance(request.toAccountNumber(), request.amount());
 
-            //Increase Balance in To Account
-            accountRepository.incrementAccountBalance(request.toAccountId(), request.amount());
+            Account toAccount = accountRepository.findAccountByAccountNumber(request.toAccountNumber());
+            Account fromAccount = accountRepository.findAccountByAccountNumber(request.fromAccountNumber());
 
-            String creditTransactionId = transactionRepository.CreateTransfer(request.toAccountId(), "CREDIT", request.amount(), request.description());
-            String debitTransactionId = transactionRepository.CreateTransfer(request.fromAccountId(), "DEBIT", request.amount(), request.description());
+            Transaction creditTxn = new Transaction();
+            creditTxn.setAccount(toAccount);
+            creditTxn.setTxnType("TRANSFER_IN");
+            creditTxn.setAmount((BigDecimal) request.amount());
+            creditTxn.setStatus("COMPLETED");
+            //Timestamp timestamp =  new Timestamp(System.currentTimeMillis());
+            //Instant instant = Instant.now();
+            //creditTxn.setTxnDate(Timestamp.from(Instant.now()));
+            creditTxn.setDescription(request.description());
+            Transaction creditSaved = transactionRepository.saveAndFlush(creditTxn);
+            Long creditTransactionId = creditSaved.getTxnId();
+
+            Transaction debitTxn = new Transaction();
+            debitTxn.setAccount(fromAccount);
+            debitTxn.setTxnType("TRANSFER_OUT");
+            debitTxn.setAmount((BigDecimal) request.amount());
+            debitTxn.setStatus("COMPLETED");
+            //Timestamp timestamp =  new Timestamp(System.currentTimeMillis());
+            //Instant instant = Instant.now();
+            //debitTxn.setTxnDate(Timestamp.from(Instant.now()));
+            debitTxn.setDescription(request.description());
+            Transaction debitSaved = transactionRepository.saveAndFlush(debitTxn);
+            Long debitTransactionId = debitSaved.getTxnId();
 
             transferRepository.createTransfer(debitTransactionId, creditTransactionId);
-            return new TransferResponse(null, TransactionStatus.COMPLETE);
+            return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transfer Completed Successfully.");
         }
         catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new TransferResponse(null, TransactionStatus.FAILED);
+            return new TransferResponse(null, TransactionStatus.FAILED, "Transfer Failed.");
         }
     }
 
     @Transactional
     public TransferResponse doTransaction(TransferRequest request) {
         try {
-            String transactionId;
             if(Objects.equals(request.transactionType(), "CREDIT")) {
-                //Increase Balance in To Account
-                accountRepository.incrementAccountBalance(request.toAccountId(), request.amount());
-                transactionId = transactionRepository.CreateTransfer(request.toAccountId(), "CREDIT", request.amount(), request.description());
-
+                accountRepository.incrementAccountBalance(request.toAccountNumber(), request.amount());
             } else {
-                //Reduce balance in from Account
-                accountRepository.decrementAccountBalance(request.toAccountId(), request.amount());
-                transactionId = transactionRepository.CreateTransfer(request.toAccountId(), "DEBIT", request.amount(), request.description());
-
+                accountRepository.decrementAccountBalance(request.toAccountNumber(), request.amount());
             }
-            return new TransferResponse(transactionId, TransactionStatus.COMPLETE);
+            return new TransferResponse(null, TransactionStatus.COMPLETE, "Transaction Completed Successfully.");
         }
         catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new TransferResponse(null, TransactionStatus.FAILED);
+            return new TransferResponse(null, TransactionStatus.FAILED, "Transaction Failed.");
         }
     }
 }
