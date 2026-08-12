@@ -11,6 +11,7 @@ import com.example.bankapi.repository.CustomerRepository;
 import com.example.bankapi.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class AccountService {
     }
 
     @Transactional
-    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
+    //@Cacheable(value = "accounts", keyGenerator = "customGenerator")
     //@PreAuthorize("hasRole('account_holder')")
     public List<AccountDto> getAllAccounts(){
         return accountRepository.getAccounts()
@@ -50,7 +51,7 @@ public class AccountService {
     }
 
     @Transactional
-    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
+    //@Cacheable(value = "accounts", keyGenerator = "customGenerator")
     //@PreAuthorize("hasRole('account_holder')")
     public List<AccountDto> getAllAccountsBySubject(String subject){
         return accountRepository.getAccounts()
