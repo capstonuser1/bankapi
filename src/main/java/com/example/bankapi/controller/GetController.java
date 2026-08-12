@@ -7,7 +7,7 @@ import com.example.bankapi.model.Account;
 import com.example.bankapi.service.AccountService;
 import com.example.bankapi.service.TransferService;
 import com.example.bankapi.service.DownstreamAccountService;
-import org.springframework.cache.annotation.Cacheable;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +31,6 @@ public class GetController {
     }
 
     @GetMapping
-    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
     public ResponseEntity<List<AccountDto>> getAll() {
         List<AccountDto> accounts = accountService.getAllAccounts();
         if (accounts.isEmpty()) {
@@ -41,7 +40,6 @@ public class GetController {
     }
 
     @GetMapping("/subjectaccounts")
-    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
     public ResponseEntity<List<AccountDto>> getAllBySubject(@AuthenticationPrincipal Jwt jwt) {
         String subject = jwt.getSubject();
         List<AccountDto> accounts = accountService.getAllAccountsBySubject(subject);
