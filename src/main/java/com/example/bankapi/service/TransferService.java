@@ -4,84 +4,77 @@ import com.example.bankapi.model.Account;
 import com.example.bankapi.model.TransactionStatus;
 import com.example.bankapi.model.TransferRequest;
 import com.example.bankapi.model.TransferResponse;
+import com.example.bankapi.repository.AccountRepository;
+import com.example.bankapi.repository.TransactionRepository;
+import com.example.bankapi.repository.TransferRepository;
+import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantLock;
 
-/**
- * Transfer service.
- *
- * Holds the mutable account state and processes transfers atomically.
- * In a production application this state would live in a database with
- * proper transactional guarantees; an in-memory list with a ReentrantLock
- * is enough for the lab.
- */
+
 @Service
 public class TransferService {
 
-    // Same account IDs as AccountController's static list, but kept here
-    // mutably so transfers can change balances. The two lists drift; in
-    // a real app there would be a single source of truth (the database).
-    private final List<Account> accounts = new ArrayList<>(List.of(
-            new Account("A001", "C001", "CHECKING", new BigDecimal("1250.00")),
-            new Account("A002", "C001", "SAVINGS",  new BigDecimal("8400.00")),
-            new Account("A003", "C002", "CHECKING", new BigDecimal("300.50")),
-            new Account("A004", "C003", "CHECKING", new BigDecimal("2100.75")),
-            new Account("A005", "C003", "SAVINGS",  new BigDecimal("15000.00"))
-    ));
+    private final TransactionRepository transactionRepository;
+    private final AccountRepository accountRepository;
+    private final TransferRepository transferRepository;
 
-    private final ReentrantLock lock = new ReentrantLock();
+    public TransferService(TransactionRepository transactionRepository, AccountRepository accountRepository, TransferRepository transferRepository) {
+        this.transactionRepository = transactionRepository;
+        this.accountRepository = accountRepository;
+        this.transferRepository = transferRepository;
+    }
 
-    public List<Account> listAccounts() {
-        lock.lock();
+    @Transactional
+    public TransferResponse doTransfer(TransferRequest request) {
         try {
-            return List.copyOf(accounts);
-        } finally {
-            lock.unlock();
+            //Reduce balance in from Account
+            accountRepository.decrementAccountBalance(request.fromAccountId(), request.amount());
+
+            //Increase Balance in To Account
+            accountRepository.incrementAccountBalance(request.toAccountId(), request.amount());
+
+            String creditTransactionId = transactionRepository.CreateTransfer(request.toAccountId(), "CREDIT", request.amount(), request.description());
+            String debitTransactionId = transactionRepository.CreateTransfer(request.fromAccountId(), "DEBIT", request.amount(), request.description());
+
+            transferRepository.createTransfer(debitTransactionId, creditTransactionId);
+            return new TransferResponse(null, TransactionStatus.COMPLETE);
+        }
+        catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new TransferResponse(null, TransactionStatus.FAILED);
         }
     }
 
-    public TransferResponse transfer(TransferRequest request) {
-        lock.lock();
+    @Transactional
+    public TransferResponse doTransaction(TransferRequest request) {
         try {
-            int fromIndex = indexOf(request.fromAccountId());
-            int toIndex   = indexOf(request.toAccountId());
+            String transactionId;
+            if(Objects.equals(request.transactionType(), "CREDIT")) {
+                //Increase Balance in To Account
+                accountRepository.incrementAccountBalance(request.toAccountId(), request.amount());
+                transactionId = transactionRepository.CreateTransfer(request.toAccountId(), "CREDIT", request.amount(), request.description());
 
-            if (fromIndex == -1 || toIndex == -1) {
-                return new TransferResponse(null, TransactionStatus.FAILED);
+            } else {
+                //Reduce balance in from Account
+                accountRepository.decrementAccountBalance(request.toAccountId(), request.amount());
+                transactionId = transactionRepository.CreateTransfer(request.toAccountId(), "DEBIT", request.amount(), request.description());
+
             }
-
-            Account from = accounts.get(fromIndex);
-            Account to   = accounts.get(toIndex);
-
-            if (request.amount().compareTo(from.balance()) > 0) {
-                return new TransferResponse(null, TransactionStatus.FAILED);
-            }
-
-            accounts.set(fromIndex, new Account(
-                    from.id(), from.customerId(), from.accountType(),
-                    from.balance().subtract(request.amount())));
-            accounts.set(toIndex, new Account(
-                    to.id(), to.customerId(), to.accountType(),
-                    to.balance().add(request.amount())));
-
-            String txnId = "T-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-            return new TransferResponse(txnId, TransactionStatus.COMPLETE);
-        } finally {
-            lock.unlock();
+            return new TransferResponse(transactionId, TransactionStatus.COMPLETE);
         }
-    }
-
-    private int indexOf(String accountId) {
-        for (int i = 0; i < accounts.size(); i++) {
-            if (accounts.get(i).id().equals(accountId)) {
-                return i;
-            }
+        catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new TransferResponse(null, TransactionStatus.FAILED);
         }
-        return -1;
     }
 }

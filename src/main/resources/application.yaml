@@ -2,6 +2,17 @@ server:
   port: 8081
 
 spring:
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1522/XEPDB1
+    username: labuser
+    password: labpass123
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate.dialect: org.hibernate.dialect.OracleDialect
   data:
     type: redis
     host: host.docker.internal

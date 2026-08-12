@@ -6,8 +6,10 @@ import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public record TransferRequest(
-        @NotBlank String fromAccountId,
-        @NotBlank String toAccountId,
-        @Positive BigDecimal amount
+        @NotBlank String transactionType,
+        @NotBlank Number fromAccountId,
+        @NotBlank Number toAccountId,
+        @Positive BigDecimal amount,
+        @NotBlank String description
         ) {
 }

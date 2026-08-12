@@ -1,7 +1,10 @@
 package com.example.bankapi.controller;
 
+import com.example.bankapi.dto.AccountDto;
+import com.example.bankapi.dto.CustomerDto;
+import com.example.bankapi.dto.TransactionDto;
 import com.example.bankapi.model.Account;
-import com.example.bankapi.service.AuditService;
+import com.example.bankapi.service.AccountService;
 import com.example.bankapi.service.TransferService;
 import com.example.bankapi.service.DownstreamAccountService;
 import org.springframework.cache.annotation.Cacheable;
@@ -11,41 +14,59 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.io.Console;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
-public class AccountController {
+public class GetController {
 
-    private AuditService auditService;
+    private final AccountService accountService;
     private final DownstreamAccountService downstreamAccountService;
-    private final TransferService transferService;
-    public AccountController(AuditService auditService, DownstreamAccountService downstreamAccountService, TransferService transferService) {
-        this.auditService = auditService;
+
+    public GetController(AccountService accountService, DownstreamAccountService downstreamAccountService, TransferService transferService) {
+        this.accountService = accountService;
         this.downstreamAccountService = downstreamAccountService;
-        this.transferService = transferService;
     }
 
     @GetMapping
     @Cacheable(value = "accounts", keyGenerator = "customGenerator")
-    public List<Account> getAll() {
-        return transferService.listAccounts();
+    public ResponseEntity<List<AccountDto>> getAll() {
+        List<AccountDto> accounts = accountService.getAllAccounts();
+        if (accounts.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+        }
+        return ResponseEntity.ok(accounts);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Account> getById(@PathVariable String id) {
-        return transferService.listAccounts().stream()
-                .filter(a -> a.id().equals(id))
-                .findFirst()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/subjectaccounts")
+    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
+    public ResponseEntity<List<AccountDto>> getAllBySubject(@AuthenticationPrincipal Jwt jwt) {
+        String subject = jwt.getSubject();
+        List<AccountDto> accounts = accountService.getAllAccountsBySubject(subject);
+        if (accounts.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+        }
+        return ResponseEntity.ok(accounts);
     }
 
-    @PostMapping
-    public ResponseEntity<Account> create(@RequestBody Account account) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(account);
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<List<TransactionDto>> getById(@PathVariable Long id) {
+        List<TransactionDto> transactions = accountService.getTransactions(id);
+        if (transactions.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+        }
+        return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("customers")
+    public ResponseEntity<List<CustomerDto>> getCustomers() {
+        List<CustomerDto> customers = accountService.getCustomers();
+        if (customers.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+        }
+        return ResponseEntity.ok(customers);
     }
 
     // TODO 6: Complete this endpoint.
@@ -67,6 +88,10 @@ public class AccountController {
         // because the token customizer in the Authorization Server only adds those
         // for user-context tokens. This difference is the main thing to observe.
         assert jwt.getExpiresAt() != null;
+
+        Console console = System.console();
+        console.printf("Current user: %s%n", jwt);
+
         return Map.of(
                 "Subject", jwt.getSubject(),
                 "Issuer", jwt.getIssuer().toString(),
@@ -76,30 +101,6 @@ public class AccountController {
                 "PreferredUsername", jwt.getClaimAsString("preferred_username") != null ? jwt.getClaimAsString("preferred_username") : "not present",
                 "FullName", jwt.getClaimAsString("name") != null ? jwt.getClaimAsString("name") : "not present"
         ); // Replace with your implementation
-    }
-
-    // TODO 10: Add this endpoint to AccountController.
-    // For a regular account holder it returns only accounts whose customerId
-    // matches their sub. For a teller or auditor it returns all accounts.
-    //
-    // Read jwt.getSubject() and jwt.getClaimAsStringList("roles").
-    // Filter ACCOUNTS by customerId for account holders.
-    // Return the full list for tellers and auditors.
-    @GetMapping("/mine")
-    public List<Account> getMyAccounts(@AuthenticationPrincipal Jwt jwt) {
-        // TODO 11: Read the caller's subject (customer ID, employee ID, or auditor ID)
-        //          and roles list. If "teller" or "auditor" is in the roles, return
-        //          ACCOUNTS in full. Otherwise filter to accounts where
-        //          customerId equals the subject.
-        String subject = jwt.getSubject();
-        List<String> roles = jwt.getClaimAsStringList("roles");
-        if (roles != null && (roles.contains("teller") || roles.contains("auditor"))) {
-            return transferService.listAccounts();
-        } else {
-            return transferService.listAccounts().stream()
-                    .filter(account -> account.customerId().equals(subject))
-                    .toList();
-        }
     }
 
     // TODO 24: Add this endpoint to AccountController.
