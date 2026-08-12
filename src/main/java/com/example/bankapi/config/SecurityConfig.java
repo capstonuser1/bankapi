@@ -10,6 +10,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 
 @Configuration
@@ -28,10 +35,32 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/transfers").hasAuthority("SCOPE_transaction.create")
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        // keep default scope prefix ("SCOPE_") for scope-based authorities
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            Collection<GrantedAuthority> authorities = new ArrayList<>();
+            Collection<GrantedAuthority> scopeAuthorities = grantedAuthoritiesConverter.convert(jwt);
+            if (scopeAuthorities != null) {
+                authorities.addAll(scopeAuthorities);
+            }
+            List<String> roles = jwt.getClaimAsStringList("roles");
+            if (roles != null) {
+                for (String role : roles) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+                }
+            }
+            return authorities;
+        });
+        return converter;
     }
 }
