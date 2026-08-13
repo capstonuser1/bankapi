@@ -50,3 +50,13 @@ spring:
       properties:
         enable.idempotence: true
         linger.ms: 10
+    consumer:
+      group-id: transactionStatsGroup
+      auto-offset-reset: latest
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.example.bankapi.dto.TransactionStatsDto
+        spring.json.trusted.packages: "*"
+
+
