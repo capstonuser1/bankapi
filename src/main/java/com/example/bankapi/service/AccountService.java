@@ -13,6 +13,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -62,10 +64,10 @@ public class AccountService {
     }
 
     @Transactional
-    public List<TransactionDto> getTransactions(Long accountId) {
-        return transactionRepository.getTransactions(accountId)
+    public List<TransactionDto> getTransactions(String accountNumber) {
+        return transactionRepository.getTransactions()
                 .stream()
-                .filter(transaction -> transaction.getAccount().getAccountId().equals(accountId))
+                .filter(transaction -> transaction.getAccount().getAccountNumber().equals(accountNumber))
                 .map(this::toTransactionDto)
                 .toList();
     }
@@ -94,6 +96,8 @@ public class AccountService {
                 transaction.getTxnId(),
                 transaction.getAccount().getAccountNumber(),
                 transaction.getTxnType(),
+                transaction.getStatus(),
+                Instant.now(),
                 transaction.getAmount(),
                 transaction.getDescription()
         );
