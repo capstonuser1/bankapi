@@ -98,6 +98,8 @@ public class TransferService {
             creditTxn.setStatus("COMPLETED");
             creditTxn.setDescription(request.description());
             Transaction creditSaved = transactionRepository.saveAndFlush(creditTxn);
+            TransactionStatsDto dt =new TransactionStatsDto(request.transactionType(), request.amount().setScale(2, BigDecimal.ROUND_HALF_UP));
+            messagePublisher.publish(dt);
             Long creditTransactionId = creditSaved.getTxnId();
             return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transaction Completed Successfully.");
         }
