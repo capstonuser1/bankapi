@@ -3,7 +3,6 @@ package com.example.bankapi.service;
 import com.example.bankapi.dto.AccountDto;
 import com.example.bankapi.dto.CustomerDto;
 import com.example.bankapi.dto.TransactionDto;
-import com.example.bankapi.dto.TransactionStatsDto;
 import com.example.bankapi.entity.Account;
 import com.example.bankapi.entity.Customer;
 import com.example.bankapi.entity.Transaction;
@@ -15,7 +14,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
-import java.math.BigDecimal;
 
 @Service
 public class AccountService {
@@ -23,26 +21,20 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final CustomerRepository customerRepository;
-    private final  MessagePublisher messagePublisher;
 
     public AccountService(AccountRepository accountRepository,
                           TransactionRepository transactionRepository,
-                          CustomerRepository customerRepository,
-                          MessagePublisher messagePublisher
+                          CustomerRepository customerRepository
     ) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.customerRepository = customerRepository;
-        this.messagePublisher = messagePublisher;
     }
 
     @Transactional
     //@Cacheable(value = "accounts", keyGenerator = "customGenerator")
     //@PreAuthorize("hasRole('account_holder')")
     public List<AccountDto> getAllAccounts(){
-        BigDecimal amount = new BigDecimal(525);
-        TransactionStatsDto dt =new TransactionStatsDto("TRANSOUT", amount);
-        messagePublisher.publish_test(dt);
         return accountRepository.getAccounts()
                 .stream()
                 .map(this::toDto)

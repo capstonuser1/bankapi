@@ -1,5 +1,6 @@
 package com.example.bankapi.service;
 
+import com.example.bankapi.dto.TransactionStatsDto;
 import com.example.bankapi.entity.Account;
 import com.example.bankapi.entity.Transaction;
 import com.example.bankapi.model.TransactionStatus;
@@ -30,11 +31,13 @@ public class TransferService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final TransferRepository transferRepository;
+    private final MessagePublisher messagePublisher;
 
-    public TransferService(TransactionRepository transactionRepository, AccountRepository accountRepository, TransferRepository transferRepository) {
+    public TransferService(TransactionRepository transactionRepository, AccountRepository accountRepository, TransferRepository transferRepository, MessagePublisher messagePublisher) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.transferRepository = transferRepository;
+        this.messagePublisher = messagePublisher;
     }
 
     @Transactional
@@ -71,6 +74,12 @@ public class TransferService {
             Long debitTransactionId = debitSaved.getTxnId();
 
             transferRepository.createTransfer(debitTransactionId, creditTransactionId);
+
+            TransactionStatsDto dt =new TransactionStatsDto("TRANSFER_IN", request.amount());
+            messagePublisher.publish_test(dt);
+
+            TransactionStatsDto dt2 =new TransactionStatsDto("TRANSFER_OUT", request.amount());
+            messagePublisher.publish_test(dt2);
             return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transfer Completed Successfully.");
         }
         catch (Exception e) {
