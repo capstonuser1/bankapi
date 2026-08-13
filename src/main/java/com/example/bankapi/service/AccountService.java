@@ -62,10 +62,10 @@ public class AccountService {
     }
 
     @Transactional
-    public List<TransactionDto> getTransactions(Long accountId) {
-        return transactionRepository.getTransactions(accountId)
+    public List<TransactionDto> getTransactions(String accountNumber) {
+        return transactionRepository.getTransactions()
                 .stream()
-                .filter(transaction -> transaction.getAccount().getAccountId().equals(accountId))
+                .filter(transaction -> transaction.getAccount().getAccountNumber().equals(accountNumber))
                 .map(this::toTransactionDto)
                 .toList();
     }

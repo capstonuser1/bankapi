@@ -59,7 +59,7 @@ public class GetController {
     }
 
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<TransactionDto>> getById(@PathVariable Long id) {
+    public ResponseEntity<List<TransactionDto>> getTransactionsById(@PathVariable String id) {
         List<TransactionDto> transactions = accountService.getTransactions(id);
         if (transactions.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
