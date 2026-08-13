@@ -62,7 +62,12 @@ public class AccountService {
                 .map(this::toDto)
                 .toList();
     }
-
+  @Transactional
+  public String  updateAccountStatus(String accountNumber, String status)
+  {
+      accountRepository.updateAccountStatus(accountNumber, status);
+      return "Account status updated successfully";
+  }
     @Transactional
     public List<TransactionDto> getTransactions(String accountNumber) {
         return transactionRepository.getTransactions()
