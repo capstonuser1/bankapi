@@ -76,7 +76,11 @@ public class TransferService {
             return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transfer Completed Successfully.");
         }
         catch (Exception e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            try {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            } catch (org.springframework.transaction.NoTransactionException ignored) {
+                // No active transaction to rollback
+            }
             return new TransferResponse(null, TransactionStatus.FAILED, "Transfer Failed.");
         }
     }
@@ -84,7 +88,7 @@ public class TransferService {
     @Transactional
     public TransferResponse doTransaction(TransferRequest request) {
         try {
-            if(Objects.equals(request.transactionType(), "DEPOSIT")) {
+            if(Objects.equals(request.transactionType(), "DEPOSIT") || Objects.equals(request.transactionType(), "CREDIT")) {
                 accountRepository.incrementAccountBalance(request.toAccountNumber(), request.amount());
             } else {
                 accountRepository.decrementAccountBalance(request.toAccountNumber(), request.amount());
@@ -98,13 +102,17 @@ public class TransferService {
             creditTxn.setStatus("COMPLETED");
             creditTxn.setDescription(request.description());
             Transaction creditSaved = transactionRepository.saveAndFlush(creditTxn);
-            TransactionStatsDto dt =new TransactionStatsDto(request.transactionType(), request.amount().setScale(2, BigDecimal.ROUND_HALF_UP));
-            messagePublisher.publish(dt);
+            TransactionStatsDto dt2 =new TransactionStatsDto(request.transactionType(), request.amount().setScale(2, BigDecimal.ROUND_HALF_UP));
+            messagePublisher.publish(dt2);
             Long creditTransactionId = creditSaved.getTxnId();
             return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transaction Completed Successfully.");
         }
         catch (Exception e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            try {
+                TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            } catch (org.springframework.transaction.NoTransactionException ignored) {
+                // No active transaction to rollback
+            }
             return new TransferResponse(null, TransactionStatus.FAILED, "Transaction Failed.");
         }
     }
