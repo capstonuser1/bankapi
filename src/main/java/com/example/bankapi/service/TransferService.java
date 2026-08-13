@@ -1,5 +1,6 @@
 package com.example.bankapi.service;
 
+import com.example.bankapi.dto.TransactionStatsDto;
 import com.example.bankapi.model.Account;
 import com.example.bankapi.model.TransactionStatus;
 import com.example.bankapi.model.TransferRequest;
@@ -27,11 +28,13 @@ public class TransferService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final TransferRepository transferRepository;
+    private final MessagePublisher messagePublisher;
 
-    public TransferService(TransactionRepository transactionRepository, AccountRepository accountRepository, TransferRepository transferRepository) {
+    public TransferService(TransactionRepository transactionRepository, AccountRepository accountRepository, TransferRepository transferRepository, MessagePublisher messagePublisher) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.transferRepository = transferRepository;
+        this.messagePublisher = messagePublisher;
     }
 
     @Transactional
@@ -47,6 +50,11 @@ public class TransferService {
             String debitTransactionId = transactionRepository.CreateTransfer(request.fromAccountId(), "DEBIT", request.amount(), request.description());
 
             transferRepository.createTransfer(debitTransactionId, creditTransactionId);
+            // kafka code
+            TransactionStatsDto dtIn =new TransactionStatsDto("TRANSFER_IN", request.amount());
+            messagePublisher.publish_test(dtIn);
+            TransactionStatsDto dtOut =new TransactionStatsDto("TRANSFER_OUT", request.amount());
+            messagePublisher.publish_test(dtOut);
             return new TransferResponse(null, TransactionStatus.COMPLETE);
         }
         catch (Exception e) {
