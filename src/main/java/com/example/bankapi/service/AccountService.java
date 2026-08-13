@@ -13,6 +13,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -94,6 +96,8 @@ public class AccountService {
                 transaction.getTxnId(),
                 transaction.getAccount().getAccountNumber(),
                 transaction.getTxnType(),
+                transaction.getStatus(),
+                Instant.now(),
                 transaction.getAmount(),
                 transaction.getDescription()
         );
