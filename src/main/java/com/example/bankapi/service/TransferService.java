@@ -10,19 +10,11 @@ import com.example.bankapi.repository.AccountRepository;
 import com.example.bankapi.repository.TransactionRepository;
 import com.example.bankapi.repository.TransferRepository;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 
 @Service
@@ -75,11 +67,11 @@ public class TransferService {
 
             transferRepository.createTransfer(debitTransactionId, creditTransactionId);
 
-            TransactionStatsDto dt =new TransactionStatsDto("TRANSFER_IN", request.amount());
-            messagePublisher.publish_test(dt);
+            TransactionStatsDto dt =new TransactionStatsDto("TRANSFER_IN", request.amount().setScale(2, BigDecimal.ROUND_HALF_UP));
+            messagePublisher.publish(dt);
 
-            TransactionStatsDto dt2 =new TransactionStatsDto("TRANSFER_OUT", request.amount());
-            messagePublisher.publish_test(dt2);
+            TransactionStatsDto dt2 =new TransactionStatsDto("TRANSFER_OUT", request.amount().setScale(2, BigDecimal.ROUND_HALF_UP));
+            messagePublisher.publish(dt2);
             return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transfer Completed Successfully.");
         }
         catch (Exception e) {

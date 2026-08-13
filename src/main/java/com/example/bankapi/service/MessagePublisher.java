@@ -23,7 +23,7 @@ public class MessagePublisher {
 
 
 
-    public void publish_test(TransactionStatsDto transaction) {
+    public void publish(TransactionStatsDto transaction) {
         CompletableFuture<SendResult<String, Object>> future =
                 kafkaTemplate.send(TOPIC, transaction.type(), transaction);
 
