@@ -39,6 +39,15 @@ public class GetController {
         return ResponseEntity.ok(accounts);
     }
 
+    @GetMapping("{customerNumber}/customeraccounts")
+    public ResponseEntity<List<AccountDto>> getAllByCustomerNumber(@PathVariable String customerNumber) {
+        List<AccountDto> accounts = accountService.getAllAccountsByCustomerNumber(customerNumber);
+        if (accounts.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
+        }
+        return ResponseEntity.ok(accounts);
+    }
+
     @GetMapping("/subjectaccounts")
     public ResponseEntity<List<AccountDto>> getAllBySubject(@AuthenticationPrincipal Jwt jwt) {
         String subject = jwt.getSubject();

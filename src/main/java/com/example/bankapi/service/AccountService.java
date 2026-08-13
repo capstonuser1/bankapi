@@ -12,6 +12,7 @@ import com.example.bankapi.repository.CustomerRepository;
 import com.example.bankapi.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.math.BigDecimal;
@@ -36,7 +37,7 @@ public class AccountService {
     }
 
     @Transactional
-    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
+    //@Cacheable(value = "accounts", keyGenerator = "customGenerator")
     //@PreAuthorize("hasRole('account_holder')")
     public List<AccountDto> getAllAccounts(){
         BigDecimal amount = new BigDecimal(525);
@@ -49,7 +50,16 @@ public class AccountService {
     }
 
     @Transactional
-    @Cacheable(value = "accounts", keyGenerator = "customGenerator")
+    public List<AccountDto> getAllAccountsByCustomerNumber(String customerNumber) {
+        return accountRepository.getAccounts()
+                .stream()
+                .filter(account -> account.getCustomer().getCustomerNumber().equals(customerNumber))
+                .map(this::toDto)
+                .toList();
+    }
+
+    @Transactional
+    //@Cacheable(value = "accounts", keyGenerator = "customGenerator")
     //@PreAuthorize("hasRole('account_holder')")
     public List<AccountDto> getAllAccountsBySubject(String subject){
         return accountRepository.getAccounts()
@@ -107,6 +117,7 @@ public class AccountService {
                 account.getOpenedDate()
         );
     }
+
 
 
 }
