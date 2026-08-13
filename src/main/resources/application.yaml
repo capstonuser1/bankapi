@@ -60,3 +60,9 @@ spring:
         spring.json.trusted.packages: "*"
 
 
+
+ratelimiter:
+  redis:
+    enabled: true
+    uri: redis://host.docker.internal:6379
+

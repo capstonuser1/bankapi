@@ -17,13 +17,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class RateLimiterServiceTest {
+class RateLimitServiceTest {
 
     @Mock
     private StringRedisTemplate stringRedisTemplate;
 
     @InjectMocks
-    private RateLimiterService rateLimiterService;
+    private RateLimitService rateLimiterService;
 
     @Test
     void isAllowed_enforcesLimit() {

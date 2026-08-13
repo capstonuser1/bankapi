@@ -30,3 +30,16 @@
 //                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)));
 //    }
 //}
+
+package com.example.bankapi.config;
+import io.lettuce.core.RedisClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class RedisConfig {
+    @Bean
+    public RedisClient redisClient() {
+        return RedisClient.create("redis://host.docker.internal:6379");
+    }
+}
