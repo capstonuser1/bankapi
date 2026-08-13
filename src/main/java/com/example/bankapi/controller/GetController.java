@@ -39,15 +39,14 @@ public class GetController {
         return ResponseEntity.ok(accounts);
     }
 
-    @GetMapping("{customerNumber}/customeraccounts")
-    public ResponseEntity<List<AccountDto>> getAllByCustomerNumber(@PathVariable String customerNumber) {
-        List<AccountDto> accounts = accountService.getAllAccountsByCustomerNumber(customerNumber);
+    @GetMapping("{customernumber}/accounts")
+    public ResponseEntity<List<AccountDto>> getAllByCustomerNumber(@PathVariable String customernumber) {
+        List<AccountDto> accounts = accountService.getAllAccountsByCustomerNumber(customernumber);
         if (accounts.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(List.of());
         }
         return ResponseEntity.ok(accounts);
     }
-
     @GetMapping("/subjectaccounts")
     public ResponseEntity<List<AccountDto>> getAllBySubject(@AuthenticationPrincipal Jwt jwt) {
         String subject = jwt.getSubject();
@@ -67,7 +66,7 @@ public class GetController {
         return ResponseEntity.ok(transactions);
     }
 
-    @GetMapping("customers")
+    @GetMapping("/customers")
     public ResponseEntity<List<CustomerDto>> getCustomers() {
         List<CustomerDto> customers = accountService.getCustomers();
         if (customers.isEmpty()) {
