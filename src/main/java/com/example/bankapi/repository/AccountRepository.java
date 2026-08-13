@@ -25,4 +25,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query(value = "SELECT * FROM Accounts c WHERE c.ACCOUNT_NUMBER = :accountNumber", nativeQuery = true)
     Account findAccountByAccountNumber(String accountNumber);
+
+    @Modifying
+    @Query(value = "UPDATE Accounts  set ACCOUNT_STATUS= :status WHERE ACCOUNT_NUMBER = :accountNumber", nativeQuery = true)
+    void updateAccountStatus(@Param("accountNumber") String accountNumber, @Param("status") String status);
 }
