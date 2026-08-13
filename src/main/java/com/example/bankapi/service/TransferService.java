@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Objects;
 
 
@@ -83,12 +84,22 @@ public class TransferService {
     @Transactional
     public TransferResponse doTransaction(TransferRequest request) {
         try {
-            if(Objects.equals(request.transactionType(), "CREDIT")) {
+            if(Objects.equals(request.transactionType(), "DEPOSIT")) {
                 accountRepository.incrementAccountBalance(request.toAccountNumber(), request.amount());
             } else {
                 accountRepository.decrementAccountBalance(request.toAccountNumber(), request.amount());
             }
-            return new TransferResponse(null, TransactionStatus.COMPLETE, "Transaction Completed Successfully.");
+
+            Transaction creditTxn = new Transaction();
+            creditTxn.setAccount(request.toAccountNumber() != null ? accountRepository.findAccountByAccountNumber(request.toAccountNumber()) : null);
+            creditTxn.setTxnType(request.transactionType());
+            creditTxn.setAmount((BigDecimal) request.amount());
+            creditTxn.setTxnDate(Instant.now());
+            creditTxn.setStatus("COMPLETED");
+            creditTxn.setDescription(request.description());
+            Transaction creditSaved = transactionRepository.saveAndFlush(creditTxn);
+            Long creditTransactionId = creditSaved.getTxnId();
+            return new TransferResponse(creditTransactionId.toString(), TransactionStatus.COMPLETE, "Transaction Completed Successfully.");
         }
         catch (Exception e) {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
