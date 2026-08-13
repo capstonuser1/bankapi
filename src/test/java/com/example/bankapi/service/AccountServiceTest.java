@@ -85,12 +85,12 @@ class AccountServiceTest {
         Transaction t1 = new Transaction(1L, accMatch, "CREDIT", new BigDecimal("5.00"), "COMPLETED", Instant.now(), "desc1");
         Transaction t2 = new Transaction(2L, accOther, "DEBIT", new BigDecimal("2.00"), "COMPLETED", Instant.now(), "desc2");
 
-        when(transactionRepository.getTransactions(200L)).thenReturn(List.of(t1, t2));
+        when(transactionRepository.getTransactions()).thenReturn(List.of(t1, t2));
 
-        List<TransactionDto> dtos = accountService.getTransactions(200L);
+        List<TransactionDto> dtos = accountService.getTransactions("ACC-X");
 
         assertEquals(1, dtos.size());
-        assertEquals("tx-1", dtos.get(0).getTransactionId());
+        assertEquals(1L, dtos.get(0).getTransactionId());
         assertEquals(accMatch.getAccountNumber(), dtos.get(0).getAccountNumber());
     }
 
