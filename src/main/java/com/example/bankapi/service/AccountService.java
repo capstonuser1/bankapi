@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
-
 @Service
 public class AccountService {
 
@@ -25,7 +24,8 @@ public class AccountService {
 
     public AccountService(AccountRepository accountRepository,
                           TransactionRepository transactionRepository,
-                          CustomerRepository customerRepository) {
+                          CustomerRepository customerRepository
+    ) {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.customerRepository = customerRepository;

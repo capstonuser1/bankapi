@@ -18,7 +18,8 @@ public class AuditService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String subject = "anonymous";
 
-        if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+        if (auth != null && auth.getPrincipal() instanceof Jwt) {
+            Jwt jwt = (Jwt) auth.getPrincipal();
             // TODO 9: Assign the subject from jwt.getSubject() to the subject variable.
             // Remember: this will be a customer ID (C001), employee ID (EM01),
             // or auditor ID (AUD01) -- never a login name like "alice".
